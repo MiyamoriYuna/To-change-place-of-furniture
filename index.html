@@ -1,0 +1,1298 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Layout - 部屋の模様替え</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans JP",
+        sans-serif;
+    background: #f5f7fa;
+    color: #263238;
+}
+
+/* ヘッダー */
+header {
+    height: 64px;
+    background: white;
+    border-bottom: 1px solid #e1e5e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    background: #e9eef2;
+    color: #263238;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.primary {
+    background: #455a64;
+    color: white;
+}
+
+/* メイン */
+.main {
+    display: flex;
+    height: calc(100vh - 64px);
+}
+
+/* サイドバー */
+.sidebar {
+    width: 280px;
+    background: white;
+    border-right: 1px solid #e1e5e8;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.section {
+    margin-bottom: 28px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+/* 部屋設定 */
+.room-setting {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #68747b;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #d5dce0;
+    border-radius: 7px;
+    font-size: 14px;
+}
+
+/* 家具追加 */
+.furniture-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.furniture-button {
+    padding: 12px 5px;
+    background: #f1f4f6;
+    border: 1px solid #e0e5e8;
+}
+
+.furniture-button:hover {
+    background: #e5eaed;
+}
+
+/* 選択家具 */
+.selected-panel {
+    display: none;
+}
+
+.selected-panel.active {
+    display: block;
+}
+
+.property {
+    margin-bottom: 10px;
+}
+
+.property label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: #68747b;
+}
+
+.delete-button {
+    width: 100%;
+    background: #f3dddd;
+    color: #a33;
+    margin-top: 8px;
+}
+
+/* キャンバス */
+.workspace {
+    flex: 1;
+    overflow: auto;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.room-wrapper {
+    position: relative;
+}
+
+/* 部屋 */
+.room {
+    position: relative;
+    background-color: #fafafa;
+
+    background-image:
+        linear-gradient(#e1e5e8 1px, transparent 1px),
+        linear-gradient(90deg, #e1e5e8 1px, transparent 1px);
+
+    border: 4px solid #455a64;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+
+    transform-origin: center;
+}
+
+/* 家具 */
+.furniture {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #546e7a;
+    background: #cfd8dc;
+
+    border-radius: 6px;
+
+    user-select: none;
+    cursor: grab;
+
+    font-size: 13px;
+    text-align: center;
+
+    transform-origin: center center;
+
+    transition:
+        box-shadow 0.1s,
+        border-color 0.1s;
+}
+
+.furniture:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+.furniture:active {
+    cursor: grabbing;
+}
+
+.furniture.selected {
+    border: 2px solid #1976d2;
+    box-shadow: 0 0 0 2px rgba(25,118,210,0.15);
+}
+
+/* 家具ごとの見た目 */
+.furniture.bed {
+    background: #d7ccc8;
+}
+
+.furniture.desk {
+    background: #bcaaa4;
+}
+
+.furniture.chair {
+    background: #b0bec5;
+}
+
+.furniture.shelf {
+    background: #c5cae9;
+}
+
+.furniture.sofa {
+    background: #b2dfdb;
+}
+
+.furniture.table {
+    background: #ffe0b2;
+}
+
+.furniture.box {
+    background: #dcedc8;
+}
+
+/* 部屋情報 */
+.room-info {
+    position: absolute;
+    bottom: -32px;
+    left: 0;
+    font-size: 12px;
+    color: #68747b;
+}
+
+/* 空状態 */
+.empty-message {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #9aa4aa;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* スマホ */
+@media (max-width: 700px) {
+
+    header {
+        padding: 0 12px;
+    }
+
+    .main {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .workspace {
+        min-height: 600px;
+        padding: 30px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        🏠 Room Layout
+    </div>
+
+    <div class="header-buttons">
+        <button onclick="saveLayout()">保存</button>
+        <button onclick="loadLayout()">読み込み</button>
+        <button onclick="clearLayout()">全消去</button>
+    </div>
+
+</header>
+
+
+<div class="main">
+
+    <!-- サイドバー -->
+    <aside class="sidebar">
+
+        <!-- 部屋設定 -->
+        <div class="section">
+
+            <div class="section-title">
+                部屋の設定
+            </div>
+
+            <div class="room-setting">
+
+                <div class="input-group">
+                    <label>横幅（cm）</label>
+                    <input
+                        type="number"
+                        id="roomWidth"
+                        value="360"
+                        min="100"
+                        onchange="updateRoom()"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>奥行き（cm）</label>
+                    <input
+                        type="number"
+                        id="roomDepth"
+                        value="300"
+                        min="100"
+                        onchange="updateRoom()"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- 家具追加 -->
+        <div class="section">
+
+            <div class="section-title">
+                家具を追加
+            </div>
+
+            <div class="furniture-buttons">
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('bed')"
+                >
+                    🛏️ ベッド
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('desk')"
+                >
+                    🖥️ 机
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('chair')"
+                >
+                    🪑 椅子
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('shelf')"
+                >
+                    📚 本棚
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('sofa')"
+                >
+                    🛋️ ソファ
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('table')"
+                >
+                    🟫 テーブル
+                </button>
+
+                <button
+                    class="furniture-button"
+                    onclick="addFurniture('box')"
+                >
+                    📦 その他
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 選択中の家具 -->
+        <div
+            class="section selected-panel"
+            id="selectedPanel"
+        >
+
+            <div class="section-title">
+                選択中の家具
+            </div>
+
+            <div class="property">
+
+                <label>名前</label>
+
+                <input
+                    id="furnitureName"
+                    onchange="changeFurnitureName()"
+                >
+
+            </div>
+
+
+            <div class="property">
+
+                <label>幅（cm）</label>
+
+                <input
+                    type="number"
+                    id="furnitureWidth"
+                    min="10"
+                    onchange="changeFurnitureSize()"
+                >
+
+            </div>
+
+
+            <div class="property">
+
+                <label>奥行き（cm）</label>
+
+                <input
+                    type="number"
+                    id="furnitureHeight"
+                    min="10"
+                    onchange="changeFurnitureSize()"
+                >
+
+            </div>
+
+
+            <div class="property">
+
+                <label>回転</label>
+
+                <button
+                    style="width:100%"
+                    onclick="rotateFurniture()"
+                >
+                    🔄 90°回転
+                </button>
+
+            </div>
+
+
+            <button
+                class="delete-button"
+                onclick="deleteFurniture()"
+            >
+                🗑️ この家具を削除
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- 作業エリア -->
+    <main class="workspace">
+
+        <div class="room-wrapper">
+
+            <div
+                id="room"
+                class="room"
+            >
+
+                <div
+                    id="emptyMessage"
+                    class="empty-message"
+                >
+                    左側から家具を追加してください
+                </div>
+
+            </div>
+
+            <div
+                id="roomInfo"
+                class="room-info"
+            >
+                360cm × 300cm
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<script>
+
+let furnitureList = [];
+
+let furnitureId = 0;
+
+let selectedFurniture = null;
+
+let dragging = false;
+
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+
+/* 家具の初期設定 */
+
+const furnitureTypes = {
+
+    bed: {
+        name: "ベッド",
+        width: 100,
+        height: 200
+    },
+
+    desk: {
+        name: "机",
+        width: 120,
+        height: 60
+    },
+
+    chair: {
+        name: "椅子",
+        width: 50,
+        height: 50
+    },
+
+    shelf: {
+        name: "本棚",
+        width: 80,
+        height: 35
+    },
+
+    sofa: {
+        name: "ソファ",
+        width: 180,
+        height: 80
+    },
+
+    table: {
+        name: "テーブル",
+        width: 120,
+        height: 80
+    },
+
+    box: {
+        name: "その他",
+        width: 60,
+        height: 60
+    }
+
+};
+
+
+/* 部屋を更新 */
+
+function updateRoom() {
+
+    const width =
+        Number(document.getElementById("roomWidth").value);
+
+    const depth =
+        Number(document.getElementById("roomDepth").value);
+
+    /*
+        1cm = 2px
+    */
+
+    const scale = 2;
+
+    const room =
+        document.getElementById("room");
+
+    room.style.width =
+        width * scale + "px";
+
+    room.style.height =
+        depth * scale + "px";
+
+    document.getElementById("roomInfo").textContent =
+        `${width}cm × ${depth}cm`;
+
+    renderFurniture();
+
+}
+
+
+/* 家具追加 */
+
+function addFurniture(type) {
+
+    const setting = furnitureTypes[type];
+
+    const furniture = {
+
+        id: furnitureId++,
+
+        type: type,
+
+        name: setting.name,
+
+        width: setting.width,
+
+        height: setting.height,
+
+        x: 30,
+
+        y: 30,
+
+        rotation: 0
+
+    };
+
+    furnitureList.push(furniture);
+
+    selectFurniture(furniture);
+
+    renderFurniture();
+
+}
+
+
+/* 家具を描画 */
+
+function renderFurniture() {
+
+    const room =
+        document.getElementById("room");
+
+    /*
+        既存家具を削除
+    */
+
+    document
+        .querySelectorAll(".furniture")
+        .forEach(el => el.remove());
+
+
+    const scale = 2;
+
+
+    furnitureList.forEach(furniture => {
+
+        const element =
+            document.createElement("div");
+
+        element.className =
+            `furniture ${furniture.type}`;
+
+        if (
+            selectedFurniture &&
+            selectedFurniture.id === furniture.id
+        ) {
+
+            element.classList.add("selected");
+
+        }
+
+
+        element.dataset.id =
+            furniture.id;
+
+
+        element.textContent =
+            furniture.name;
+
+
+        element.style.width =
+            furniture.width * scale + "px";
+
+        element.style.height =
+            furniture.height * scale + "px";
+
+        element.style.left =
+            furniture.x * scale + "px";
+
+        element.style.top =
+            furniture.y * scale + "px";
+
+        element.style.transform =
+            `rotate(${furniture.rotation}deg)`;
+
+
+        /* クリック */
+
+        element.addEventListener(
+            "mousedown",
+            startDrag
+        );
+
+        element.addEventListener(
+            "touchstart",
+            startTouchDrag,
+            { passive:false }
+        );
+
+
+        room.appendChild(element);
+
+    });
+
+
+    updateEmptyMessage();
+
+}
+
+
+/* 空メッセージ */
+
+function updateEmptyMessage() {
+
+    const message =
+        document.getElementById("emptyMessage");
+
+    if (furnitureList.length === 0) {
+
+        message.style.display = "block";
+
+    } else {
+
+        message.style.display = "none";
+
+    }
+
+}
+
+
+/* 家具選択 */
+
+function selectFurniture(furniture) {
+
+    selectedFurniture =
+        furniture;
+
+    document
+        .getElementById("selectedPanel")
+        .classList.add("active");
+
+
+    document
+        .getElementById("furnitureName")
+        .value =
+        furniture.name;
+
+
+    document
+        .getElementById("furnitureWidth")
+        .value =
+        furniture.width;
+
+
+    document
+        .getElementById("furnitureHeight")
+        .value =
+        furniture.height;
+
+
+    renderFurniture();
+
+}
+
+
+/* ドラッグ開始 */
+
+function startDrag(event) {
+
+    event.preventDefault();
+
+    const id =
+        Number(event.currentTarget.dataset.id);
+
+    const furniture =
+        furnitureList.find(
+            item => item.id === id
+        );
+
+    selectFurniture(furniture);
+
+    dragging = true;
+
+
+    const rect =
+        event.currentTarget.getBoundingClientRect();
+
+    dragOffsetX =
+        event.clientX - rect.left;
+
+    dragOffsetY =
+        event.clientY - rect.top;
+
+
+    document.addEventListener(
+        "mousemove",
+        dragFurniture
+    );
+
+    document.addEventListener(
+        "mouseup",
+        stopDrag
+    );
+
+}
+
+
+/* ドラッグ中 */
+
+function dragFurniture(event) {
+
+    if (!dragging || !selectedFurniture) {
+        return;
+    }
+
+
+    const room =
+        document
+            .getElementById("room")
+            .getBoundingClientRect();
+
+
+    const scale = 2;
+
+
+    let x =
+        (event.clientX -
+            room.left -
+            dragOffsetX) / scale;
+
+    let y =
+        (event.clientY -
+            room.top -
+            dragOffsetY) / scale;
+
+
+    /*
+        部屋の外に出ないようにする
+    */
+
+    const roomWidth =
+        Number(
+            document.getElementById("roomWidth").value
+        );
+
+    const roomDepth =
+        Number(
+            document.getElementById("roomDepth").value
+        );
+
+
+    x = Math.max(
+        0,
+        Math.min(
+            x,
+            roomWidth -
+            selectedFurniture.width
+        )
+    );
+
+
+    y = Math.max(
+        0,
+        Math.min(
+            y,
+            roomDepth -
+            selectedFurniture.height
+        )
+    );
+
+
+    selectedFurniture.x = x;
+    selectedFurniture.y = y;
+
+
+    renderFurniture();
+
+}
+
+
+/* ドラッグ終了 */
+
+function stopDrag() {
+
+    dragging = false;
+
+    document.removeEventListener(
+        "mousemove",
+        dragFurniture
+    );
+
+    document.removeEventListener(
+        "mouseup",
+        stopDrag
+    );
+
+}
+
+
+/* タッチ操作 */
+
+function startTouchDrag(event) {
+
+    event.preventDefault();
+
+    const touch =
+        event.touches[0];
+
+    const id =
+        Number(event.currentTarget.dataset.id);
+
+    const furniture =
+        furnitureList.find(
+            item => item.id === id
+        );
+
+    selectFurniture(furniture);
+
+
+    const rect =
+        event.currentTarget.getBoundingClientRect();
+
+
+    dragOffsetX =
+        touch.clientX - rect.left;
+
+    dragOffsetY =
+        touch.clientY - rect.top;
+
+
+    dragging = true;
+
+
+    document.addEventListener(
+        "touchmove",
+        touchMove,
+        { passive:false }
+    );
+
+    document.addEventListener(
+        "touchend",
+        touchEnd
+    );
+
+}
+
+
+/* タッチ移動 */
+
+function touchMove(event) {
+
+    if (!dragging || !selectedFurniture) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const touch =
+        event.touches[0];
+
+    const room =
+        document
+            .getElementById("room")
+            .getBoundingClientRect();
+
+    const scale = 2;
+
+
+    let x =
+        (touch.clientX -
+            room.left -
+            dragOffsetX) / scale;
+
+    let y =
+        (touch.clientY -
+            room.top -
+            dragOffsetY) / scale;
+
+
+    const roomWidth =
+        Number(
+            document.getElementById("roomWidth").value
+        );
+
+    const roomDepth =
+        Number(
+            document.getElementById("roomDepth").value
+        );
+
+
+    x = Math.max(
+        0,
+        Math.min(
+            x,
+            roomWidth -
+            selectedFurniture.width
+        )
+    );
+
+
+    y = Math.max(
+        0,
+        Math.min(
+            y,
+            roomDepth -
+            selectedFurniture.height
+        )
+    );
+
+
+    selectedFurniture.x = x;
+    selectedFurniture.y = y;
+
+
+    renderFurniture();
+
+}
+
+
+/* タッチ終了 */
+
+function touchEnd() {
+
+    dragging = false;
+
+    document.removeEventListener(
+        "touchmove",
+        touchMove
+    );
+
+    document.removeEventListener(
+        "touchend",
+        touchEnd
+    );
+
+}
+
+
+/* 名前変更 */
+
+function changeFurnitureName() {
+
+    if (!selectedFurniture) {
+        return;
+    }
+
+    selectedFurniture.name =
+        document.getElementById(
+            "furnitureName"
+        ).value;
+
+    renderFurniture();
+
+}
+
+
+/* サイズ変更 */
+
+function changeFurnitureSize() {
+
+    if (!selectedFurniture) {
+        return;
+    }
+
+
+    selectedFurniture.width =
+        Number(
+            document.getElementById(
+                "furnitureWidth"
+            ).value
+        );
+
+
+    selectedFurniture.height =
+        Number(
+            document.getElementById(
+                "furnitureHeight"
+            ).value
+        );
+
+
+    renderFurniture();
+
+}
+
+
+/* 回転 */
+
+function rotateFurniture() {
+
+    if (!selectedFurniture) {
+        return;
+    }
+
+    selectedFurniture.rotation += 90;
+
+    renderFurniture();
+
+}
+
+
+/* 削除 */
+
+function deleteFurniture() {
+
+    if (!selectedFurniture) {
+        return;
+    }
+
+
+    furnitureList =
+        furnitureList.filter(
+            item =>
+                item.id !==
+                selectedFurniture.id
+        );
+
+
+    selectedFurniture = null;
+
+
+    document
+        .getElementById("selectedPanel")
+        .classList.remove("active");
+
+
+    renderFurniture();
+
+}
+
+
+/* 保存 */
+
+function saveLayout() {
+
+    const data = {
+
+        roomWidth:
+            document.getElementById(
+                "roomWidth"
+            ).value,
+
+        roomDepth:
+            document.getElementById(
+                "roomDepth"
+            ).value,
+
+        furniture:
+            furnitureList
+
+    };
+
+
+    localStorage.setItem(
+        "roomLayout",
+        JSON.stringify(data)
+    );
+
+
+    alert("レイアウトを保存しました。");
+
+}
+
+
+/* 読み込み */
+
+function loadLayout() {
+
+    const saved =
+        localStorage.getItem(
+            "roomLayout"
+        );
+
+
+    if (!saved) {
+
+        alert(
+            "保存されたレイアウトがありません。"
+        );
+
+        return;
+
+    }
+
+
+    const data =
+        JSON.parse(saved);
+
+
+    document.getElementById(
+        "roomWidth"
+    ).value =
+        data.roomWidth;
+
+
+    document.getElementById(
+        "roomDepth"
+    ).value =
+        data.roomDepth;
+
+
+    furnitureList =
+        data.furniture || [];
+
+
+    selectedFurniture = null;
+
+
+    document
+        .getElementById("selectedPanel")
+        .classList.remove("active");
+
+
+    updateRoom();
+
+
+    alert("レイアウトを読み込みました。");
+
+}
+
+
+/* 全消去 */
+
+function clearLayout() {
+
+    if (
+        !confirm(
+            "家具をすべて削除しますか？"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    furnitureList = [];
+
+    selectedFurniture = null;
+
+
+    document
+        .getElementById("selectedPanel")
+        .classList.remove("active");
+
+
+    renderFurniture();
+
+}
+
+
+/* 初期化 */
+
+updateRoom();
+
+</script>
+
+</body>
+</html>
+```
